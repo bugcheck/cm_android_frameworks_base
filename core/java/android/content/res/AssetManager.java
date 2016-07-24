@@ -1040,4 +1040,32 @@ public final class AssetManager implements AutoCloseable {
             destroy();
         }
     }
+    
+    /* Fix error [Issue#2]:
+     * 	Failed to register native method android.content.res.AssetManager.addOverlayPathNative(Ljava/lang/String;)I in /system/framework/framework.jar 
+     * 
+     * gabry3795
+     * */
+    
+     /**
+     * Add a set of assets to overlay an already added set of assets.
+     *
+     * This is only intended for application resources. System wide resources
+     * are handled before any Java code is executed.
+     *
+     * {@hide}
+     */
+    public final int addOverlayPath(String idmapPath) {
+        synchronized (this) {
+            int res = addOverlayPathNative(idmapPath);
+            makeStringBlocks(mStringBlocks);
+            return res;
+        }
+    }
+    /**
+     * See addOverlayPath.
+     *
+     * {@hide}
+     */
+    public native final int addOverlayPathNative(String idmapPath);
 }
