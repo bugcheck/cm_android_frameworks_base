@@ -626,4 +626,15 @@ public class Surface implements Parcelable {
  * */
     public static native void nativeSetRefreshDirty(long renderer, Rect dirty);
  
+ /* Fix error [Issue#7]
+ * 	Failed to register native method android.view.Surface.nativeSetLowPowerDisplayLevel(I)V in /system/framework/framework.jar:classes2.dex
+ *
+ * I suppose that the method sig is
+ * 	public static native void nativeSetLowPowerDisplayLevel(int i);
+ * 
+ * Thanks to http://www.rgagnon.com/javadetails/java-0286.html
+ * gabry3795
+ * */
+    public static native void nativeSetLowPowerDisplayLevel(int i);
+ 
 }
