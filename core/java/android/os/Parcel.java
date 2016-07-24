@@ -1,3 +1,9 @@
+/* Fix error [Issue#3]:
+ *  Revert entire class commit
+ * 
+ * gabry3795
+ * */
+
 /*
  * Copyright (C) 2006 The Android Open Source Project
  *
@@ -13,10 +19,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package android.os;
-
-import android.annotation.IntegerRes;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.util.Log;
@@ -24,7 +27,6 @@ import android.util.Size;
 import android.util.SizeF;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileDescriptor;
@@ -42,9 +44,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import dalvik.system.VMRuntime;
-
 /**
  * Container for a message (data and object references) that can
  * be sent through an IBinder.  A Parcel can contain both flattened data
@@ -187,23 +186,17 @@ public final class Parcel {
     private static final boolean DEBUG_RECYCLE = false;
     private static final boolean DEBUG_ARRAY_MAP = false;
     private static final String TAG = "Parcel";
-
     @SuppressWarnings({"UnusedDeclaration"})
     private long mNativePtr; // used by native code
-
     /**
      * Flag indicating if {@link #mNativePtr} was allocated by this object,
      * indicating that we're responsible for its lifecycle.
      */
     private boolean mOwnsNativeParcelObject;
-    private long mNativeSize;
-
     private RuntimeException mStack;
-
     private static final int POOL_SIZE = 6;
     private static final Parcel[] sOwnedPool = new Parcel[POOL_SIZE];
     private static final Parcel[] sHolderPool = new Parcel[POOL_SIZE];
-
     private static final int VAL_NULL = -1;
     private static final int VAL_STRING = 0;
     private static final int VAL_INTEGER = 1;
@@ -233,7 +226,6 @@ public final class Parcel {
     private static final int VAL_PERSISTABLEBUNDLE = 25;
     private static final int VAL_SIZE = 26;
     private static final int VAL_SIZEF = 27;
-
     // The initial int32 in a Binder call's reply Parcel header:
     private static final int EX_SECURITY = -1;
     private static final int EX_BAD_PARCELABLE = -2;
@@ -243,18 +235,15 @@ public final class Parcel {
     private static final int EX_NETWORK_MAIN_THREAD = -6;
     private static final int EX_UNSUPPORTED_OPERATION = -7;
     private static final int EX_HAS_REPLY_HEADER = -128;  // special; see below
-
     private static native int nativeDataSize(long nativePtr);
     private static native int nativeDataAvail(long nativePtr);
     private static native int nativeDataPosition(long nativePtr);
     private static native int nativeDataCapacity(long nativePtr);
-    private static native long nativeSetDataSize(long nativePtr, int size);
+    private static native void nativeSetDataSize(long nativePtr, int size);
     private static native void nativeSetDataPosition(long nativePtr, int pos);
     private static native void nativeSetDataCapacity(long nativePtr, int size);
-
     private static native boolean nativePushAllowFds(long nativePtr, boolean allowFds);
     private static native void nativeRestoreAllowFds(long nativePtr, boolean lastValue);
-
     private static native void nativeWriteByteArray(long nativePtr, byte[] b, int offset, int len);
     private static native void nativeWriteBlob(long nativePtr, byte[] b, int offset, int len);
     private static native void nativeWriteInt(long nativePtr, int val);
@@ -263,8 +252,7 @@ public final class Parcel {
     private static native void nativeWriteDouble(long nativePtr, double val);
     private static native void nativeWriteString(long nativePtr, String val);
     private static native void nativeWriteStrongBinder(long nativePtr, IBinder val);
-    private static native long nativeWriteFileDescriptor(long nativePtr, FileDescriptor val);
-
+    private static native void nativeWriteFileDescriptor(long nativePtr, FileDescriptor val);
     private static native byte[] nativeCreateByteArray(long nativePtr);
     private static native byte[] nativeReadBlob(long nativePtr);
     private static native int nativeReadInt(long nativePtr);
@@ -274,22 +262,18 @@ public final class Parcel {
     private static native String nativeReadString(long nativePtr);
     private static native IBinder nativeReadStrongBinder(long nativePtr);
     private static native FileDescriptor nativeReadFileDescriptor(long nativePtr);
-
     private static native long nativeCreate();
-    private static native long nativeFreeBuffer(long nativePtr);
+    private static native void nativeFreeBuffer(long nativePtr);
     private static native void nativeDestroy(long nativePtr);
-
     private static native byte[] nativeMarshall(long nativePtr);
-    private static native long nativeUnmarshall(
+    private static native void nativeUnmarshall(
             long nativePtr, byte[] data, int offset, int length);
-    private static native long nativeAppendFrom(
+    private static native void nativeAppendFrom(
             long thisNativePtr, long otherNativePtr, int offset, int length);
     private static native boolean nativeHasFileDescriptors(long nativePtr);
     private static native void nativeWriteInterfaceToken(long nativePtr, String interfaceName);
     private static native void nativeEnforceInterface(long nativePtr, String interfaceName);
-
     private static native long nativeGetBlobAshmemSize(long nativePtr);
-
     public final static Parcelable.Creator<String> STRING_CREATOR
              = new Parcelable.Creator<String>() {
         public String createFromParcel(Parcel source) {
@@ -299,7 +283,6 @@ public final class Parcel {
             return new String[size];
         }
     };
-
     /**
      * Retrieve a new Parcel object from the pool.
      */
@@ -320,7 +303,6 @@ public final class Parcel {
         }
         return new Parcel(0);
     }
-
     /**
      * Put a Parcel object back into the pool.  You must not touch
      * the object after this call.
@@ -328,7 +310,6 @@ public final class Parcel {
     public final void recycle() {
         if (DEBUG_RECYCLE) mStack = null;
         freeBuffer();
-
         final Parcel[] pool;
         if (mOwnsNativeParcelObject) {
             pool = sOwnedPool;
@@ -336,7 +317,6 @@ public final class Parcel {
             mNativePtr = 0;
             pool = sHolderPool;
         }
-
         synchronized (pool) {
             for (int i=0; i<POOL_SIZE; i++) {
                 if (pool[i] == null) {
@@ -346,20 +326,16 @@ public final class Parcel {
             }
         }
     }
-
     /** @hide */
     public static native long getGlobalAllocSize();
-
     /** @hide */
     public static native long getGlobalAllocCount();
-
     /**
      * Returns the total amount of data contained in the parcel.
      */
     public final int dataSize() {
         return nativeDataSize(mNativePtr);
     }
-
     /**
      * Returns the amount of data remaining to be read from the
      * parcel.  That is, {@link #dataSize}-{@link #dataPosition}.
@@ -367,7 +343,6 @@ public final class Parcel {
     public final int dataAvail() {
         return nativeDataAvail(mNativePtr);
     }
-
     /**
      * Returns the current position in the parcel data.  Never
      * more than {@link #dataSize}.
@@ -375,7 +350,6 @@ public final class Parcel {
     public final int dataPosition() {
         return nativeDataPosition(mNativePtr);
     }
-
     /**
      * Returns the total amount of space in the parcel.  This is always
      * >= {@link #dataSize}.  The difference between it and dataSize() is the
@@ -385,7 +359,6 @@ public final class Parcel {
     public final int dataCapacity() {
         return nativeDataCapacity(mNativePtr);
     }
-
     /**
      * Change the amount of data in the parcel.  Can be either smaller or
      * larger than the current size.  If larger than the current capacity,
@@ -394,9 +367,8 @@ public final class Parcel {
      * @param size The new number of bytes in the Parcel.
      */
     public final void setDataSize(int size) {
-        updateNativeSize(nativeSetDataSize(mNativePtr, size));
+        nativeSetDataSize(mNativePtr, size);
     }
-
     /**
      * Move the current read/write position in the parcel.
      * @param pos New offset in the parcel; must be between 0 and
@@ -405,7 +377,6 @@ public final class Parcel {
     public final void setDataPosition(int pos) {
         nativeSetDataPosition(mNativePtr, pos);
     }
-
     /**
      * Change the capacity (current available space) of the parcel.
      *
@@ -416,17 +387,14 @@ public final class Parcel {
     public final void setDataCapacity(int size) {
         nativeSetDataCapacity(mNativePtr, size);
     }
-
     /** @hide */
     public final boolean pushAllowFds(boolean allowFds) {
         return nativePushAllowFds(mNativePtr, allowFds);
     }
-
     /** @hide */
     public final void restoreAllowFds(boolean lastValue) {
         nativeRestoreAllowFds(mNativePtr, lastValue);
     }
-
     /**
      * Returns the raw bytes of the parcel.
      *
@@ -441,25 +409,21 @@ public final class Parcel {
     public final byte[] marshall() {
         return nativeMarshall(mNativePtr);
     }
-
     /**
      * Set the bytes in data to be the raw bytes of this Parcel.
      */
     public final void unmarshall(byte[] data, int offset, int length) {
-        updateNativeSize(nativeUnmarshall(mNativePtr, data, offset, length));
+        nativeUnmarshall(mNativePtr, data, offset, length);
     }
-
     public final void appendFrom(Parcel parcel, int offset, int length) {
-        updateNativeSize(nativeAppendFrom(mNativePtr, parcel.mNativePtr, offset, length));
+        nativeAppendFrom(mNativePtr, parcel.mNativePtr, offset, length);
     }
-
     /**
      * Report whether the parcel contains any marshalled file descriptors.
      */
     public final boolean hasFileDescriptors() {
         return nativeHasFileDescriptors(mNativePtr);
     }
-
     /**
      * Store or read an IBinder interface token in the parcel at the current
      * {@link #dataPosition}.  This is used to validate that the marshalled
@@ -468,11 +432,9 @@ public final class Parcel {
     public final void writeInterfaceToken(String interfaceName) {
         nativeWriteInterfaceToken(mNativePtr, interfaceName);
     }
-
     public final void enforceInterface(String interfaceName) {
         nativeEnforceInterface(mNativePtr, interfaceName);
     }
-
     /**
      * Write a byte array into the parcel at the current {@link #dataPosition},
      * growing {@link #dataCapacity} if needed.
@@ -481,7 +443,6 @@ public final class Parcel {
     public final void writeByteArray(byte[] b) {
         writeByteArray(b, 0, (b != null) ? b.length : 0);
     }
-
     /**
      * Write a byte array into the parcel at the current {@link #dataPosition},
      * growing {@link #dataCapacity} if needed.
@@ -497,7 +458,6 @@ public final class Parcel {
         Arrays.checkOffsetAndCount(b.length, offset, len);
         nativeWriteByteArray(mNativePtr, b, offset, len);
     }
-
     /**
      * Write a blob of data into the parcel at the current {@link #dataPosition},
      * growing {@link #dataCapacity} if needed.
@@ -508,7 +468,6 @@ public final class Parcel {
     public final void writeBlob(byte[] b) {
         writeBlob(b, 0, (b != null) ? b.length : 0);
     }
-
     /**
      * Write a blob of data into the parcel at the current {@link #dataPosition},
      * growing {@link #dataCapacity} if needed.
@@ -526,7 +485,6 @@ public final class Parcel {
         Arrays.checkOffsetAndCount(b.length, offset, len);
         nativeWriteBlob(mNativePtr, b, offset, len);
     }
-
     /**
      * Write an integer value into the parcel at the current dataPosition(),
      * growing dataCapacity() if needed.
@@ -534,7 +492,6 @@ public final class Parcel {
     public final void writeInt(int val) {
         nativeWriteInt(mNativePtr, val);
     }
-
     /**
      * Write a long integer value into the parcel at the current dataPosition(),
      * growing dataCapacity() if needed.
@@ -542,7 +499,6 @@ public final class Parcel {
     public final void writeLong(long val) {
         nativeWriteLong(mNativePtr, val);
     }
-
     /**
      * Write a floating point value into the parcel at the current
      * dataPosition(), growing dataCapacity() if needed.
@@ -550,7 +506,6 @@ public final class Parcel {
     public final void writeFloat(float val) {
         nativeWriteFloat(mNativePtr, val);
     }
-
     /**
      * Write a double precision floating point value into the parcel at the
      * current dataPosition(), growing dataCapacity() if needed.
@@ -558,7 +513,6 @@ public final class Parcel {
     public final void writeDouble(double val) {
         nativeWriteDouble(mNativePtr, val);
     }
-
     /**
      * Write a string value into the parcel at the current dataPosition(),
      * growing dataCapacity() if needed.
@@ -566,7 +520,6 @@ public final class Parcel {
     public final void writeString(String val) {
         nativeWriteString(mNativePtr, val);
     }
-
     /**
      * Write a CharSequence value into the parcel at the current dataPosition(),
      * growing dataCapacity() if needed.
@@ -575,7 +528,6 @@ public final class Parcel {
     public final void writeCharSequence(CharSequence val) {
         TextUtils.writeToParcel(val, this, 0);
     }
-
     /**
      * Write an object into the parcel at the current dataPosition(),
      * growing dataCapacity() if needed.
@@ -583,7 +535,6 @@ public final class Parcel {
     public final void writeStrongBinder(IBinder val) {
         nativeWriteStrongBinder(mNativePtr, val);
     }
-
     /**
      * Write an object into the parcel at the current dataPosition(),
      * growing dataCapacity() if needed.
@@ -591,7 +542,6 @@ public final class Parcel {
     public final void writeStrongInterface(IInterface val) {
         writeStrongBinder(val == null ? null : val.asBinder());
     }
-
     /**
      * Write a FileDescriptor into the parcel at the current dataPosition(),
      * growing dataCapacity() if needed.
@@ -603,26 +553,8 @@ public final class Parcel {
      * if {@link Parcelable#PARCELABLE_WRITE_RETURN_VALUE} is set.</p>
      */
     public final void writeFileDescriptor(FileDescriptor val) {
-        updateNativeSize(nativeWriteFileDescriptor(mNativePtr, val));
+        nativeWriteFileDescriptor(mNativePtr, val);
     }
-
-    private void updateNativeSize(long newNativeSize) {
-        if (mOwnsNativeParcelObject) {
-            if (newNativeSize > Integer.MAX_VALUE) {
-                newNativeSize = Integer.MAX_VALUE;
-            }
-            if (newNativeSize != mNativeSize) {
-                int delta = (int) (newNativeSize - mNativeSize);
-                if (delta > 0) {
-                    VMRuntime.getRuntime().registerNativeAllocation(delta);
-                } else {
-                    VMRuntime.getRuntime().registerNativeFree(-delta);
-                }
-                mNativeSize = newNativeSize;
-            }
-        }
-    }
-
     /**
      * Write a byte value into the parcel at the current dataPosition(),
      * growing dataCapacity() if needed.
@@ -630,7 +562,6 @@ public final class Parcel {
     public final void writeByte(byte val) {
         writeInt(val);
     }
-
     /**
      * Please use {@link #writeBundle} instead.  Flattens a Map into the parcel
      * at the current dataPosition(),
@@ -645,7 +576,6 @@ public final class Parcel {
     public final void writeMap(Map val) {
         writeMapInternal((Map<String, Object>) val);
     }
-
     /**
      * Flatten a Map into the parcel at the current dataPosition(),
      * growing dataCapacity() if needed.  The Map keys must be String objects.
@@ -662,7 +592,6 @@ public final class Parcel {
             writeValue(e.getValue());
         }
     }
-
     /**
      * Flatten an ArrayMap into the parcel at the current dataPosition(),
      * growing dataCapacity() if needed.  The Map keys must be String objects.
@@ -690,14 +619,12 @@ public final class Parcel {
                     + " " + val.keyAt(i));
         }
     }
-
     /**
      * @hide For testing only.
      */
     public void writeArrayMap(ArrayMap<String, Object> val) {
         writeArrayMapInternal(val);
     }
-
     /**
      * Flatten a Bundle into the parcel at the current dataPosition(),
      * growing dataCapacity() if needed.
@@ -707,10 +634,8 @@ public final class Parcel {
             writeInt(-1);
             return;
         }
-
         val.writeToParcel(this, 0);
     }
-
     /**
      * Flatten a PersistableBundle into the parcel at the current dataPosition(),
      * growing dataCapacity() if needed.
@@ -720,10 +645,8 @@ public final class Parcel {
             writeInt(-1);
             return;
         }
-
         val.writeToParcel(this, 0);
     }
-
     /**
      * Flatten a Size into the parcel at the current dataPosition(),
      * growing dataCapacity() if needed.
@@ -732,7 +655,6 @@ public final class Parcel {
         writeInt(val.getWidth());
         writeInt(val.getHeight());
     }
-
     /**
      * Flatten a SizeF into the parcel at the current dataPosition(),
      * growing dataCapacity() if needed.
@@ -741,7 +663,6 @@ public final class Parcel {
         writeFloat(val.getWidth());
         writeFloat(val.getHeight());
     }
-
     /**
      * Flatten a List into the parcel at the current dataPosition(), growing
      * dataCapacity() if needed.  The List values are written using
@@ -760,7 +681,6 @@ public final class Parcel {
             i++;
         }
     }
-
     /**
      * Flatten an Object array into the parcel at the current dataPosition(),
      * growing dataCapacity() if needed.  The array values are written using
@@ -779,7 +699,6 @@ public final class Parcel {
             i++;
         }
     }
-
     /**
      * Flatten a generic SparseArray into the parcel at the current
      * dataPosition(), growing dataCapacity() if needed.  The SparseArray
@@ -800,7 +719,6 @@ public final class Parcel {
             i++;
         }
     }
-
     public final void writeSparseBooleanArray(SparseBooleanArray val) {
         if (val == null) {
             writeInt(-1);
@@ -815,7 +733,6 @@ public final class Parcel {
             i++;
         }
     }
-
     public final void writeBooleanArray(boolean[] val) {
         if (val != null) {
             int N = val.length;
@@ -827,7 +744,6 @@ public final class Parcel {
             writeInt(-1);
         }
     }
-
     public final boolean[] createBooleanArray() {
         int N = readInt();
         // >>2 as a fast divide-by-4 works in the create*Array() functions
@@ -843,7 +759,6 @@ public final class Parcel {
             return null;
         }
     }
-
     public final void readBooleanArray(boolean[] val) {
         int N = readInt();
         if (N == val.length) {
@@ -854,7 +769,6 @@ public final class Parcel {
             throw new RuntimeException("bad array lengths");
         }
     }
-
     public final void writeCharArray(char[] val) {
         if (val != null) {
             int N = val.length;
@@ -866,7 +780,6 @@ public final class Parcel {
             writeInt(-1);
         }
     }
-
     public final char[] createCharArray() {
         int N = readInt();
         if (N >= 0 && N <= (dataAvail() >> 2)) {
@@ -879,7 +792,6 @@ public final class Parcel {
             return null;
         }
     }
-
     public final void readCharArray(char[] val) {
         int N = readInt();
         if (N == val.length) {
@@ -890,7 +802,6 @@ public final class Parcel {
             throw new RuntimeException("bad array lengths");
         }
     }
-
     public final void writeIntArray(int[] val) {
         if (val != null) {
             int N = val.length;
@@ -902,7 +813,6 @@ public final class Parcel {
             writeInt(-1);
         }
     }
-
     public final int[] createIntArray() {
         int N = readInt();
         if (N >= 0 && N <= (dataAvail() >> 2)) {
@@ -915,7 +825,6 @@ public final class Parcel {
             return null;
         }
     }
-
     public final void readIntArray(int[] val) {
         int N = readInt();
         if (N == val.length) {
@@ -926,7 +835,6 @@ public final class Parcel {
             throw new RuntimeException("bad array lengths");
         }
     }
-
     public final void writeLongArray(long[] val) {
         if (val != null) {
             int N = val.length;
@@ -938,7 +846,6 @@ public final class Parcel {
             writeInt(-1);
         }
     }
-
     public final long[] createLongArray() {
         int N = readInt();
         // >>3 because stored longs are 64 bits
@@ -952,7 +859,6 @@ public final class Parcel {
             return null;
         }
     }
-
     public final void readLongArray(long[] val) {
         int N = readInt();
         if (N == val.length) {
@@ -963,7 +869,6 @@ public final class Parcel {
             throw new RuntimeException("bad array lengths");
         }
     }
-
     public final void writeFloatArray(float[] val) {
         if (val != null) {
             int N = val.length;
@@ -975,7 +880,6 @@ public final class Parcel {
             writeInt(-1);
         }
     }
-
     public final float[] createFloatArray() {
         int N = readInt();
         // >>2 because stored floats are 4 bytes
@@ -989,7 +893,6 @@ public final class Parcel {
             return null;
         }
     }
-
     public final void readFloatArray(float[] val) {
         int N = readInt();
         if (N == val.length) {
@@ -1000,7 +903,6 @@ public final class Parcel {
             throw new RuntimeException("bad array lengths");
         }
     }
-
     public final void writeDoubleArray(double[] val) {
         if (val != null) {
             int N = val.length;
@@ -1012,7 +914,6 @@ public final class Parcel {
             writeInt(-1);
         }
     }
-
     public final double[] createDoubleArray() {
         int N = readInt();
         // >>3 because stored doubles are 8 bytes
@@ -1026,7 +927,6 @@ public final class Parcel {
             return null;
         }
     }
-
     public final void readDoubleArray(double[] val) {
         int N = readInt();
         if (N == val.length) {
@@ -1037,7 +937,6 @@ public final class Parcel {
             throw new RuntimeException("bad array lengths");
         }
     }
-
     public final void writeStringArray(String[] val) {
         if (val != null) {
             int N = val.length;
@@ -1049,7 +948,6 @@ public final class Parcel {
             writeInt(-1);
         }
     }
-
     public final String[] createStringArray() {
         int N = readInt();
         if (N >= 0) {
@@ -1062,7 +960,6 @@ public final class Parcel {
             return null;
         }
     }
-
     public final void readStringArray(String[] val) {
         int N = readInt();
         if (N == val.length) {
@@ -1073,7 +970,6 @@ public final class Parcel {
             throw new RuntimeException("bad array lengths");
         }
     }
-
     public final void writeBinderArray(IBinder[] val) {
         if (val != null) {
             int N = val.length;
@@ -1085,7 +981,6 @@ public final class Parcel {
             writeInt(-1);
         }
     }
-
     /**
      * @hide
      */
@@ -1100,7 +995,6 @@ public final class Parcel {
             writeInt(-1);
         }
     }
-
     /**
      * @hide
      */
@@ -1115,7 +1009,6 @@ public final class Parcel {
             writeInt(-1);
         }
     }
-
     public final IBinder[] createBinderArray() {
         int N = readInt();
         if (N >= 0) {
@@ -1128,7 +1021,6 @@ public final class Parcel {
             return null;
         }
     }
-
     public final void readBinderArray(IBinder[] val) {
         int N = readInt();
         if (N == val.length) {
@@ -1139,7 +1031,6 @@ public final class Parcel {
             throw new RuntimeException("bad array lengths");
         }
     }
-
     /**
      * Flatten a List containing a particular object type into the parcel, at
      * the current dataPosition() and growing dataCapacity() if needed.  The
@@ -1173,7 +1064,6 @@ public final class Parcel {
             i++;
         }
     }
-
     /**
      * Flatten a List containing String objects into the parcel, at
      * the current dataPosition() and growing dataCapacity() if needed.  They
@@ -1198,7 +1088,6 @@ public final class Parcel {
             i++;
         }
     }
-
     /**
      * Flatten a List containing IBinder objects into the parcel, at
      * the current dataPosition() and growing dataCapacity() if needed.  They
@@ -1223,7 +1112,6 @@ public final class Parcel {
             i++;
         }
     }
-
     /**
      * Flatten a heterogeneous array containing a particular object type into
      * the parcel, at
@@ -1260,7 +1148,6 @@ public final class Parcel {
             writeInt(-1);
         }
     }
-
     /**
      * Flatten the Parcelable object into the parcel.
      *
@@ -1278,7 +1165,6 @@ public final class Parcel {
             writeInt(0);
         }
     }
-
     /**
      * Flatten a generic object in to a parcel.  The given Object value may
      * currently be one of the following types:
@@ -1419,7 +1305,6 @@ public final class Parcel {
             }
         }
     }
-
     /**
      * Flatten the name of the class of the Parcelable and its contents
      * into the parcel.
@@ -1436,13 +1321,11 @@ public final class Parcel {
         writeParcelableCreator(p);
         p.writeToParcel(this, parcelableFlags);
     }
-
     /** @hide */
     public final void writeParcelableCreator(Parcelable p) {
         String name = p.getClass().getName();
         writeString(name);
     }
-
     /**
      * Write a generic serializable object in to a Parcel.  It is strongly
      * recommended that this method be avoided, since the serialization
@@ -1456,13 +1339,11 @@ public final class Parcel {
         }
         String name = s.getClass().getName();
         writeString(name);
-
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
             ObjectOutputStream oos = new ObjectOutputStream(baos);
             oos.writeObject(s);
             oos.close();
-
             writeByteArray(baos.toByteArray());
         } catch (IOException ioe) {
             throw new RuntimeException("Parcelable encountered " +
@@ -1470,7 +1351,6 @@ public final class Parcel {
                 ")", ioe);
         }
     }
-
     /**
      * Special function for writing an exception result at the header of
      * a parcel, to be used when returning an exception from a transaction.
@@ -1521,7 +1401,6 @@ public final class Parcel {
         }
         writeString(e.getMessage());
     }
-
     /**
      * Special function for writing information at the front of the Parcel
      * indicating that no exception occurred.
@@ -1556,7 +1435,6 @@ public final class Parcel {
             writeInt(0);
         }
     }
-
     /**
      * Special function for reading an exception result from the header of
      * a parcel, to be used after receiving the result of a transaction.  This
@@ -1573,7 +1451,6 @@ public final class Parcel {
             readException(code, msg);
         }
     }
-
     /**
      * Parses the header of a Binder call's response Parcel and
      * returns the exception code.  Deals with lite or fat headers.
@@ -1606,7 +1483,6 @@ public final class Parcel {
         }
         return code;
     }
-
     /**
      * Throw an exception with the given message. Not intended for use
      * outside the Parcel class.
@@ -1634,21 +1510,18 @@ public final class Parcel {
         throw new RuntimeException("Unknown exception code: " + code
                 + " msg " + msg);
     }
-
     /**
      * Read an integer value from the parcel at the current dataPosition().
      */
     public final int readInt() {
         return nativeReadInt(mNativePtr);
     }
-
     /**
      * Read a long integer value from the parcel at the current dataPosition().
      */
     public final long readLong() {
         return nativeReadLong(mNativePtr);
     }
-
     /**
      * Read a floating point value from the parcel at the current
      * dataPosition().
@@ -1656,7 +1529,6 @@ public final class Parcel {
     public final float readFloat() {
         return nativeReadFloat(mNativePtr);
     }
-
     /**
      * Read a double precision floating point value from the parcel at the
      * current dataPosition().
@@ -1664,14 +1536,12 @@ public final class Parcel {
     public final double readDouble() {
         return nativeReadDouble(mNativePtr);
     }
-
     /**
      * Read a string value from the parcel at the current dataPosition().
      */
     public final String readString() {
         return nativeReadString(mNativePtr);
     }
-
     /**
      * Read a CharSequence value from the parcel at the current dataPosition().
      * @hide
@@ -1679,14 +1549,12 @@ public final class Parcel {
     public final CharSequence readCharSequence() {
         return TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(this);
     }
-
     /**
      * Read an object from the parcel at the current dataPosition().
      */
     public final IBinder readStrongBinder() {
         return nativeReadStrongBinder(mNativePtr);
     }
-
     /**
      * Read a FileDescriptor from the parcel at the current dataPosition().
      */
@@ -1694,12 +1562,10 @@ public final class Parcel {
         FileDescriptor fd = nativeReadFileDescriptor(mNativePtr);
         return fd != null ? new ParcelFileDescriptor(fd) : null;
     }
-
     /** {@hide} */
     public final FileDescriptor readRawFileDescriptor() {
         return nativeReadFileDescriptor(mNativePtr);
     }
-
     /*package*/ static native FileDescriptor openFileDescriptor(String file,
             int mode) throws FileNotFoundException;
     /*package*/ static native FileDescriptor dupFileDescriptor(FileDescriptor orig)
@@ -1707,14 +1573,12 @@ public final class Parcel {
     /*package*/ static native void closeFileDescriptor(FileDescriptor desc)
             throws IOException;
     /*package*/ static native void clearFileDescriptor(FileDescriptor desc);
-
     /**
      * Read a byte value from the parcel at the current dataPosition().
      */
     public final byte readByte() {
         return (byte)(readInt() & 0xff);
     }
-
     /**
      * Please use {@link #readBundle(ClassLoader)} instead (whose data must have
      * been written with {@link #writeBundle}.  Read into an existing Map object
@@ -1724,7 +1588,6 @@ public final class Parcel {
         int N = readInt();
         readMapInternal(outVal, N, loader);
     }
-
     /**
      * Read into an existing List object from the parcel at the current
      * dataPosition(), using the given class loader to load any enclosed
@@ -1734,7 +1597,6 @@ public final class Parcel {
         int N = readInt();
         readListInternal(outVal, N, loader);
     }
-
     /**
      * Please use {@link #readBundle(ClassLoader)} instead (whose data must have
      * been written with {@link #writeBundle}.  Read and return a new HashMap
@@ -1752,7 +1614,6 @@ public final class Parcel {
         readMapInternal(m, N, loader);
         return m;
     }
-
     /**
      * Read and return a new Bundle object from the parcel at the current
      * dataPosition().  Returns null if the previously written Bundle object was
@@ -1761,7 +1622,6 @@ public final class Parcel {
     public final Bundle readBundle() {
         return readBundle(null);
     }
-
     /**
      * Read and return a new Bundle object from the parcel at the current
      * dataPosition(), using the given class loader to initialize the class
@@ -1781,7 +1641,6 @@ public final class Parcel {
         }
         return bundle;
     }
-
     /**
      * Read and return a new Bundle object from the parcel at the current
      * dataPosition().  Returns null if the previously written Bundle object was
@@ -1790,7 +1649,6 @@ public final class Parcel {
     public final PersistableBundle readPersistableBundle() {
         return readPersistableBundle(null);
     }
-
     /**
      * Read and return a new Bundle object from the parcel at the current
      * dataPosition(), using the given class loader to initialize the class
@@ -1803,14 +1661,12 @@ public final class Parcel {
             if (Bundle.DEBUG) Log.d(TAG, "null bundle: length=" + length);
             return null;
         }
-
         final PersistableBundle bundle = new PersistableBundle(this, length);
         if (loader != null) {
             bundle.setClassLoader(loader);
         }
         return bundle;
     }
-
     /**
      * Read a Size from the parcel at the current dataPosition().
      */
@@ -1819,7 +1675,6 @@ public final class Parcel {
         final int height = readInt();
         return new Size(width, height);
     }
-
     /**
      * Read a SizeF from the parcel at the current dataPosition().
      */
@@ -1828,14 +1683,12 @@ public final class Parcel {
         final float height = readFloat();
         return new SizeF(width, height);
     }
-
     /**
      * Read and return a byte[] object from the parcel.
      */
     public final byte[] createByteArray() {
         return nativeCreateByteArray(mNativePtr);
     }
-
     /**
      * Read a byte[] object from the parcel and copy it into the
      * given byte array.
@@ -1849,7 +1702,6 @@ public final class Parcel {
             throw new RuntimeException("bad array lengths");
         }
     }
-
     /**
      * Read a blob of data from the parcel and return it as a byte array.
      * {@hide}
@@ -1858,68 +1710,55 @@ public final class Parcel {
     public final byte[] readBlob() {
         return nativeReadBlob(mNativePtr);
     }
-
     /**
      * Read and return a String[] object from the parcel.
      * {@hide}
      */
     public final String[] readStringArray() {
         String[] array = null;
-
         int length = readInt();
         if (length >= 0)
         {
             array = new String[length];
-
             for (int i = 0 ; i < length ; i++)
             {
                 array[i] = readString();
             }
         }
-
         return array;
     }
-
     /**
      * Read and return a CharSequence[] object from the parcel.
      * {@hide}
      */
     public final CharSequence[] readCharSequenceArray() {
         CharSequence[] array = null;
-
         int length = readInt();
         if (length >= 0)
         {
             array = new CharSequence[length];
-
             for (int i = 0 ; i < length ; i++)
             {
                 array[i] = readCharSequence();
             }
         }
-
         return array;
     }
-
     /**
      * Read and return an ArrayList&lt;CharSequence&gt; object from the parcel.
      * {@hide}
      */
     public final ArrayList<CharSequence> readCharSequenceList() {
         ArrayList<CharSequence> array = null;
-
         int length = readInt();
         if (length >= 0) {
             array = new ArrayList<CharSequence>(length);
-
             for (int i = 0 ; i < length ; i++) {
                 array.add(readCharSequence());
             }
         }
-
         return array;
     }
-
     /**
      * Read and return a new ArrayList object from the parcel at the current
      * dataPosition().  Returns null if the previously written list object was
@@ -1935,7 +1774,6 @@ public final class Parcel {
         readListInternal(l, N, loader);
         return l;
     }
-
     /**
      * Read and return a new Object array from the parcel at the current
      * dataPosition().  Returns null if the previously written array was
@@ -1951,7 +1789,6 @@ public final class Parcel {
         readArrayInternal(l, N, loader);
         return l;
     }
-
     /**
      * Read and return a new SparseArray object from the parcel at the current
      * dataPosition().  Returns null if the previously written list object was
@@ -1967,7 +1804,6 @@ public final class Parcel {
         readSparseArrayInternal(sa, N, loader);
         return sa;
     }
-
     /**
      * Read and return a new SparseBooleanArray object from the parcel at the current
      * dataPosition().  Returns null if the previously written list object was
@@ -1982,7 +1818,6 @@ public final class Parcel {
         readSparseBooleanArrayInternal(sa, N);
         return sa;
     }
-
     /**
      * Read and return a new ArrayList containing a particular object type from
      * the parcel that was written with {@link #writeTypedList} at the
@@ -2012,7 +1847,6 @@ public final class Parcel {
         }
         return l;
     }
-
     /**
      * Read into the given List items containing a particular object type
      * that were written with {@link #writeTypedList} at the
@@ -2047,7 +1881,6 @@ public final class Parcel {
             list.remove(N);
         }
     }
-
     /**
      * Read and return a new ArrayList containing String objects from
      * the parcel that was written with {@link #writeStringList} at the
@@ -2071,7 +1904,6 @@ public final class Parcel {
         }
         return l;
     }
-
     /**
      * Read and return a new ArrayList containing IBinder objects from
      * the parcel that was written with {@link #writeBinderList} at the
@@ -2095,7 +1927,6 @@ public final class Parcel {
         }
         return l;
     }
-
     /**
      * Read into the given List items String objects that were written with
      * {@link #writeStringList} at the current dataPosition().
@@ -2119,7 +1950,6 @@ public final class Parcel {
             list.remove(N);
         }
     }
-
     /**
      * Read into the given List items IBinder objects that were written with
      * {@link #writeBinderList} at the current dataPosition().
@@ -2143,7 +1973,6 @@ public final class Parcel {
             list.remove(N);
         }
     }
-
     /**
      * Read and return a new array containing a particular object type from
      * the parcel at the current dataPosition().  Returns null if the
@@ -2169,7 +1998,6 @@ public final class Parcel {
         }
         return l;
     }
-
     public final <T> void readTypedArray(T[] val, Parcelable.Creator<T> c) {
         int N = readInt();
         if (N == val.length) {
@@ -2184,7 +2012,6 @@ public final class Parcel {
             throw new RuntimeException("bad array lengths");
         }
     }
-
     /**
      * @deprecated
      * @hide
@@ -2193,7 +2020,6 @@ public final class Parcel {
     public final <T> T[] readTypedArray(Parcelable.Creator<T> c) {
         return createTypedArray(c);
     }
-
     /**
      * Read and return a typed Parcelable object from a parcel.
      * Returns null if the previous written object was null.
@@ -2212,7 +2038,6 @@ public final class Parcel {
             return null;
         }
     }
-
     /**
      * Write a heterogeneous array of Parcelable objects into the Parcel.
      * Each object in the array is written along with its class name, so
@@ -2238,7 +2063,6 @@ public final class Parcel {
             writeInt(-1);
         }
     }
-
     /**
      * Read a typed object from a parcel.  The given class loader will be
      * used to load any enclosed Parcelables.  If it is null, the default class
@@ -2246,102 +2070,71 @@ public final class Parcel {
      */
     public final Object readValue(ClassLoader loader) {
         int type = readInt();
-
         switch (type) {
         case VAL_NULL:
             return null;
-
         case VAL_STRING:
             return readString();
-
         case VAL_INTEGER:
             return readInt();
-
         case VAL_MAP:
             return readHashMap(loader);
-
         case VAL_PARCELABLE:
             return readParcelable(loader);
-
         case VAL_SHORT:
             return (short) readInt();
-
         case VAL_LONG:
             return readLong();
-
         case VAL_FLOAT:
             return readFloat();
-
         case VAL_DOUBLE:
             return readDouble();
-
         case VAL_BOOLEAN:
             return readInt() == 1;
-
         case VAL_CHARSEQUENCE:
             return readCharSequence();
-
         case VAL_LIST:
             return readArrayList(loader);
-
         case VAL_BOOLEANARRAY:
             return createBooleanArray();        
-
         case VAL_BYTEARRAY:
             return createByteArray();
-
         case VAL_STRINGARRAY:
             return readStringArray();
-
         case VAL_CHARSEQUENCEARRAY:
             return readCharSequenceArray();
-
         case VAL_IBINDER:
             return readStrongBinder();
-
         case VAL_OBJECTARRAY:
             return readArray(loader);
-
         case VAL_INTARRAY:
             return createIntArray();
-
         case VAL_LONGARRAY:
             return createLongArray();
-
         case VAL_BYTE:
             return readByte();
-
         case VAL_SERIALIZABLE:
             return readSerializable(loader);
-
         case VAL_PARCELABLEARRAY:
             return readParcelableArray(loader);
-
         case VAL_SPARSEARRAY:
             return readSparseArray(loader);
-
         case VAL_SPARSEBOOLEANARRAY:
             return readSparseBooleanArray();
-
         case VAL_BUNDLE:
             return readBundle(loader); // loading will be deferred
-
         case VAL_PERSISTABLEBUNDLE:
             return readPersistableBundle(loader);
-
         case VAL_SIZE:
             return readSize();
-
         case VAL_SIZEF:
             return readSizeF();
-
         default:
             int off = dataPosition() - 4;
             throw new RuntimeException(
                 "Parcel " + this + ": Unmarshalling unknown type code " + type + " at offset " + off);
         }
     }
-
     /**
      * Read and return a new Parcelable from the parcel.  The given class loader
      * will be used to load any enclosed Parcelables.  If it is null, the default
@@ -2366,7 +2159,6 @@ public final class Parcel {
         }
         return (T) creator.createFromParcel(this);
     }
-
     /** @hide */
     @SuppressWarnings("unchecked")
     public final <T extends Parcelable> T readCreator(Parcelable.Creator<?> creator,
@@ -2378,7 +2170,6 @@ public final class Parcel {
         }
         return (T) creator.createFromParcel(this);
     }
-
     /** @hide */
     public final Parcelable.Creator<?> readParcelableCreator(ClassLoader loader) {
         String name = readString();
@@ -2442,14 +2233,11 @@ public final class Parcel {
                             + "non-null Parcelable.Creator object called "
                             + "CREATOR on class " + name);
                 }
-
                 map.put(name, creator);
             }
         }
-
         return creator;
     }
-
     /**
      * Read and return a new Parcelable array from the parcel.
      * The given class loader will be used to load any enclosed
@@ -2467,7 +2255,6 @@ public final class Parcel {
         }
         return p;
     }
-
     /**
      * Read and return a new Serializable object from the parcel.
      * @return the Serializable object, or null if the Serializable name
@@ -2476,7 +2263,6 @@ public final class Parcel {
     public final Serializable readSerializable() {
         return readSerializable(null);
     }
-
     private final Serializable readSerializable(final ClassLoader loader) {
         String name = readString();
         if (name == null) {
@@ -2485,7 +2271,6 @@ public final class Parcel {
             // return null, which indicates that the name wasn't found in the parcel.
             return null;
         }
-
         byte[] serializedData = createByteArray();
         ByteArrayInputStream bais = new ByteArrayInputStream(serializedData);
         try {
@@ -2514,18 +2299,15 @@ public final class Parcel {
                 + name + ")", cnfe);
         }
     }
-
     // Cache of previously looked up CREATOR.createFromParcel() methods for
     // particular classes.  Keys are the names of the classes, values are
     // Method objects.
     private static final HashMap<ClassLoader,HashMap<String,Parcelable.Creator<?>>>
         mCreators = new HashMap<>();
-
     /** @hide for internal use only. */
     static protected final Parcel obtain(int obj) {
         throw new UnsupportedOperationException();
     }
-
     /** @hide */
     static protected final Parcel obtain(long obj) {
         final Parcel[] pool = sHolderPool;
@@ -2545,7 +2327,6 @@ public final class Parcel {
         }
         return new Parcel(obj);
     }
-
     private Parcel(long nativePtr) {
         if (DEBUG_RECYCLE) {
             mStack = new RuntimeException();
@@ -2553,7 +2334,6 @@ public final class Parcel {
         //Log.i(TAG, "Initializing obj=0x" + Integer.toHexString(obj), mStack);
         init(nativePtr);
     }
-
     private void init(long nativePtr) {
         if (nativePtr != 0) {
             mNativePtr = nativePtr;
@@ -2563,23 +2343,19 @@ public final class Parcel {
             mOwnsNativeParcelObject = true;
         }
     }
-
     private void freeBuffer() {
         if (mOwnsNativeParcelObject) {
-            updateNativeSize(nativeFreeBuffer(mNativePtr));
+            nativeFreeBuffer(mNativePtr);
         }
     }
-
     private void destroy() {
         if (mNativePtr != 0) {
             if (mOwnsNativeParcelObject) {
                 nativeDestroy(mNativePtr);
-                updateNativeSize(0);
             }
             mNativePtr = 0;
         }
     }
-
     @Override
     protected void finalize() throws Throwable {
         if (DEBUG_RECYCLE) {
@@ -2589,7 +2365,6 @@ public final class Parcel {
         }
         destroy();
     }
-
     /* package */ void readMapInternal(Map outVal, int N,
         ClassLoader loader) {
         while (N > 0) {
@@ -2599,7 +2374,6 @@ public final class Parcel {
             N--;
         }
     }
-
     /* package */ void readArrayMapInternal(ArrayMap outVal, int N,
         ClassLoader loader) {
         if (DEBUG_ARRAY_MAP) {
@@ -2620,7 +2394,6 @@ public final class Parcel {
         }
         outVal.validate();
     }
-
     /* package */ void readArrayMapSafelyInternal(ArrayMap outVal, int N,
         ClassLoader loader) {
         if (DEBUG_ARRAY_MAP) {
@@ -2637,7 +2410,6 @@ public final class Parcel {
             N--;
         }
     }
-
     /**
      * @hide For testing only.
      */
@@ -2648,7 +2420,6 @@ public final class Parcel {
         }
         readArrayMapInternal(outVal, N, loader);
     }
-
     private void readListInternal(List outVal, int N,
         ClassLoader loader) {
         while (N > 0) {
@@ -2658,7 +2429,6 @@ public final class Parcel {
             N--;
         }
     }
-
     private void readArrayInternal(Object[] outVal, int N,
         ClassLoader loader) {
         for (int i = 0; i < N; i++) {
@@ -2667,7 +2437,6 @@ public final class Parcel {
             outVal[i] = value;
         }
     }
-
     private void readSparseArrayInternal(SparseArray outVal, int N,
         ClassLoader loader) {
         while (N > 0) {
@@ -2678,8 +2447,6 @@ public final class Parcel {
             N--;
         }
     }
-
-
     private void readSparseBooleanArrayInternal(SparseBooleanArray outVal, int N) {
         while (N > 0) {
             int key = readInt();
@@ -2689,7 +2456,6 @@ public final class Parcel {
             N--;
         }
     }
-
     /**
      * @hide For testing
      */
