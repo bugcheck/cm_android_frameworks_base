@@ -1248,6 +1248,13 @@ public class StaticLayout extends Layout {
     private static native void nFinishBuilder(long nativePtr);
 
     /* package */ static native long nLoadHyphenator(ByteBuffer buf, int offset);
+    
+    /* Fix error [Issue#3]:
+     * 	Failed to register native method android.text.StaticLayout.nLoadHyphenator(Ljava/lang/String;)J in /system/framework/framework.jar 
+     * 
+     * gabry3795
+     * */
+    static native long nLoadHyphenator(String s);
 
     private static native void nSetLocale(long nativePtr, String locale, long nativeHyphenator);
 

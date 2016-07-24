@@ -181,4 +181,11 @@ public class Hyphenator {
             sMap.put(Locale.forLanguageTag(language), sMap.get(Locale.forLanguageTag(fallback)));
         }
     }
+    
+      /* Fix error [Issue#3]:
+     * 	Failed to register native method android.text.StaticLayout.nLoadHyphenator(Ljava/lang/String;)J in /system/framework/framework.jar 
+     * 
+     * gabry3795
+     * */
+     
 }
