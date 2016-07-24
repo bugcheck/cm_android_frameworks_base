@@ -108,6 +108,21 @@ static jint android_util_Log_println_native(JNIEnv* env, jobject clazz,
     return res;
 }
 
+/* Fix error [Issue#1]
+ * 	Failed to register native method android.util.Log.print_powerlog_native(ILjava/lang/String;Ljava/lang/String;)I in /system/framework/framework.jar 
+ * 
+ * For now I suppose that the method sig is
+ * 	public static native int print_powerlog_native(int INTEGER1, String STRING1, String STRING2)
+ * 
+ * Thanks to http://www.rgagnon.com/javadetails/java-0286.html
+ * gabry3795
+ * */
+static jint android_util_Log_print_powerlog_native(JNIEnv* env, jobject clazz,
+        jint INTEGER1, jstring STRING1, jstring STRING2)
+{
+    return 0;
+}
+
 /*
  * JNI registration.
  */
@@ -115,6 +130,8 @@ static JNINativeMethod gMethods[] = {
     /* name, signature, funcPtr */
     { "isLoggable",      "(Ljava/lang/String;I)Z", (void*) android_util_Log_isLoggable },
     { "println_native",  "(IILjava/lang/String;Ljava/lang/String;)I", (void*) android_util_Log_println_native },
+    /* Look above comment */
+    { "print_powerlog_native",  "(ILjava/lang/String;Ljava/lang/String;)I", (void*) android_util_Log_print_powerlog_native }
 };
 
 int register_android_util_Log(JNIEnv* env)
