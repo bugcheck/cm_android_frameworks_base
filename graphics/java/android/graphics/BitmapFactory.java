@@ -44,6 +44,13 @@ public class BitmapFactory {
             inDither = false;
             inScaled = true;
             inPremultiplied = true;
+            
+/* Fix error [Issue#8]
+ * 	java.lang.NoSuchFieldError: no "Z" field "inThumbnailMode" in class "Landroid/graphics/BitmapFactory$Options;" or its superclasses
+ *
+ * gabry3795
+ * */
+            inThumbnailMode = false;
         }
 
         /**
