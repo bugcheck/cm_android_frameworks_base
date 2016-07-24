@@ -614,4 +614,14 @@ public class Surface implements Parcelable {
     private static native void nHwuiSetSurface(long renderer, long surface);
     private static native void nHwuiDraw(long renderer);
     private static native void nHwuiDestroy(long renderer);
+    
+/* Fix error [Issue#5]
+ * 	Failed to register native method android.view.ThreadedRenderer.nInitialize(JLandroid/view/Surface;)Z in /system/framework/framework.jar:classes2.dex
+ *
+ * I suppose that the method sig is
+ * 	public static native int print_powerlog_native(int INTEGER1, String STRING1, String STRING2)
+ * 
+ * Thanks to http://www.rgagnon.com/javadetails/java-0286.html
+ * gabry3795
+ * */
 }
