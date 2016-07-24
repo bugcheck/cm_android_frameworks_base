@@ -365,4 +365,15 @@ public final class Log {
 
     /** @hide */ public static native int println_native(int bufID,
             int priority, String tag, String msg);
+            
+    /* Fix error [Issue#1]:
+     * 	Failed to register native method android.util.Log.print_powerlog_native(ILjava/lang/String;Ljava/lang/String;)I in /system/framework/framework.jar 
+     * 
+     * For now I suppose that the method sig is
+     * 	public static native int print_powerlog_native(int INTEGER1, String STRING1, String STRING2)
+     * 
+     * Thanks to http://www.rgagnon.com/javadetails/java-0286.html
+     * gabry3795
+     * */
+    /** @hide */ public static native int print_powerlog_native(int INTEGER1, String STRING1, String STRING2);
 }
