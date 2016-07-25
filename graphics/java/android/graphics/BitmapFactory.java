@@ -34,6 +34,13 @@ import java.io.InputStream;
  */
 public class BitmapFactory {
     private static final int DECODE_BUFFER_SIZE = 16 * 1024;
+    
+/* Fix error [Issue#8]
+ * 	java.lang.NoSuchFieldError: no "Z" field "inThumbnailMode" in class "Landroid/graphics/BitmapFactory$Options;" or its superclasses
+ *
+ * gabry3795
+ * */
+    public boolean inThumbnailMode = false;
 
     public static class Options {
         /**
@@ -44,13 +51,6 @@ public class BitmapFactory {
             inDither = false;
             inScaled = true;
             inPremultiplied = true;
-            
-/* Fix error [Issue#8]
- * 	java.lang.NoSuchFieldError: no "Z" field "inThumbnailMode" in class "Landroid/graphics/BitmapFactory$Options;" or its superclasses
- *
- * gabry3795
- * */
-            inThumbnailMode = false;
         }
 
         /**
